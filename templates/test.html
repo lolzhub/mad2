@@ -1,0 +1,34 @@
+<div class="row border">
+    <div class="col" style="height: 750px;">
+        <div class="border mx-auto mt-5" style="height: 400px; width: 300px;">
+            Login Page
+        </div>
+    </div>
+</div>
+
+<div>
+    <h2 class="text-center">Login Form</h2>
+    <div>
+        <label for="email">Enter your email:</label>
+        <input type="text" v-model="email" id="email">
+    </div>
+    <div>
+        <label for="email">Enter your password:</label>
+        <input type="password" v-model="password" id="password">
+    </div>
+    <div>
+        <button class="btn btn-primary" @click="loginUser">Submit</button>
+    </div>
+</div>
+
+<div v-for="for sr in srs" class="card">
+    <div class="card-body">
+        <h5 class="class-title">
+            {{ srs.name }} <span class="badge text-white bg-secondary">{{ sr.service_status }}</span>
+            <p class="card-text">professional_id: {{sr.professional_id}}</p>
+            <p class="card-text">service_id: {{sr.service_id}}</p>
+            <p class="card-text">urgency_level: {{sr.urgency_level}}</p>
+            <p class="card-text">cost: {{sr.cost}}</p>
+        </h5>
+    </div>
+</div>

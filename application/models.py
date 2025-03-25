@@ -53,6 +53,7 @@ class Professional(db.Model):
 
     # Backreference to service requests
     service_requests = db.relationship('ServiceRequest', backref='professional', lazy=True)
+    # services = db.relationship('Service', backref='professional', lazy=True)
 
     def __repr__(self):
         return f"<Professional('{self.id}', '{self.service_name}'>"
@@ -66,6 +67,9 @@ class Service(db.Model):
     time_required = db.Column(db.String(50), nullable=False)  # Time required for the service (e.g., "2 hours")
     description = db.Column(db.Text, nullable=True)  # Description of the service
     rating = db.Column(db.Float, default=0.0, nullable=True)
+    cat = db.Column(db.String(50))
+    # professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=True)  # Optional assignment
+    
 
     # Backreference to service requests
     service_requests = db.relationship('ServiceRequest', backref='service', lazy=True)
