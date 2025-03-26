@@ -49,7 +49,9 @@ def create_db():
                 email="john.p1@app.com",
                 password=bcrypt.generate_password_hash("123").decode("utf-8"),
                 full_name="John Doe",
+                service_desc="Best Plumbing Service",
                 service_name="Plumbing",
+                time_req="1 Hr",
                 cost=50.0,
                 experience=5,
                 document="https://example.com/certificates/john_doe.pdf",
@@ -58,8 +60,15 @@ def create_db():
                 rating=4.5,
                 is_blocked=False,
             )
-
+            dummy_cust = Customer(
+                email="u1@app.com",
+                password=bcrypt.generate_password_hash("123").decode("utf-8"),
+                full_name="John Doe1",
+                address="123 Main Street, Springfield",
+                pincode="123456"
+            )
             db.session.add(dummy_professional)
+            db.session.add(dummy_cust)
             # db.session.commit()
 
             db.session.add(admin)

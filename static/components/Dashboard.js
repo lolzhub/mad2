@@ -21,7 +21,10 @@ export default {
                     <thead class="thead-dark">
                         <tr>
                             <th>Service Name</th>
-                            <th>Provider</th>
+                            <th>Description</th>
+                            <th>Provider Name</th>
+                            <th>Time required</th>
+                            <th>Rating</th>
                             <th>Cost</th>
                             <th>Book</th>
                         </tr>
@@ -29,8 +32,11 @@ export default {
                     <tbody>
                         <tr v-for="service in filteredServices" :key="service.id">
                             <td>{{ service.name }}</td>
-                            <td>{{ service.provider }}</td>
-                            <td>{{ service.cost }}</td>
+                            <td>{{ service.description }}</td>
+                            <td>{{ service.proff_name }}</td>
+                            <td>{{ service.time_required }}</td>
+                            <td>{{ service.rating }}</td>
+                            <td>{{ service.price }}</td>
                             <td>
                                 <button @click="bookService(service)" class="btn btn-success">Book</button>
                             </td>
@@ -53,6 +59,7 @@ export default {
                             <th>Urgency Level</th>
                             <th>Cost</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,6 +74,11 @@ export default {
                                 <span v-else-if="sr.service_status === 'requested'" class="badge text-black bg-primary d-block text-center p-2">{{ sr.service_status }}</span>
                                 <button v-else-if="sr.service_status === 'accepted'" @click="navigateToFeedback(sr)" class="btn btn-success d-block text-center p-1 w-100">Close it?</button>
                                 <span v-else class="badge bg-info text-dark d-block text-center p-2">{{ sr.service_status }}</span>
+                            </td>
+                            <td>
+                                <button v-if="sr.service_status === 'requested'" @click="updateRequest(sr)" class="btn btn-warning btn-sm">Update</button>
+                                <button v-if="sr.service_status === 'requested'" @click="deleteRequest(sr)" class="btn btn-danger btn-sm">Delete</button>
+                                
                             </td>
                         </tr>
                     </tbody>
@@ -122,45 +134,40 @@ export default {
             .then(data => this.filteredServices = data.services || []);
         },
         bookService(service) {
-            const now = new Date();
-            const formattedDate = now.toISOString().split(".")[0]; // Removes milliseconds and timezone
-
-            if (confirm(`Do you want to book ${service.name}?`)) {
-                const requestData = {
-                    service_id: 1,
-                    customer_id: localStorage.getItem("id"),
-                    professional_id: 1,
-                    remarks: "No remarks", // Can be enhanced to user input
-                    location: "User provided location", // Can be enhanced
-                    preferred_date: formattedDate,
-                    urgency_level: "Medium", // Can be dynamic
-                    cost: 10
-                };
-
-                fetch("/api/add_req", {
-                    method: "POST",
+            this.$router.push({ 
+                name: 'BookService', 
+                params: { 
+                    cost: service.price, 
+                    time: service.time_required, 
+                    proff_name: service.proff_name, 
+                    proff_id: service.proff, 
+                    name: service.name, 
+                    id: service.proff 
+                } 
+            });
+        },
+        updateRequest(sr) {
+            this.$router.push({ name: 'UpdateRequest', params: { id: sr.id } });
+        },
+        deleteRequest(sr) {
+            if (confirm("Are you sure you want to delete this request?")) {
+                fetch(`/api/req/${sr.id}`, {
+                    method: "DELETE",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${localStorage.getItem("access_token")}`
-                    },
-                    body: JSON.stringify(requestData)
+                    }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === "success") {
-                        alert("Service booked successfully!");
-                        this.srs.push({
-                            id: data.service_request,
-                            service_id: service.id,
-                            professional_id: 1,
-                            urgency_level: "Medium",
-                            cost: service.cost,
-                            service_status: "requested"
-                        });
+                        alert("Service request deleted successfully!");
+                        this.srs = this.srs.filter(request => request.id !== sr.id);
                     } else {
-                        alert("Failed to book service: " + data.msg);
+                        alert("Failed to delete request: " + data.msg);
                     }
-                });
+                })
+                .catch(error => console.error("Error deleting service request:", error));
             }
         }
     }

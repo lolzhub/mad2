@@ -5,25 +5,17 @@ export default {
             <div class="border mx-auto mt-5" style="height: 400px; width: 300px;">
                 <div>
                     <p> {{message}}</p>
-                    <h2 class="text-center">Login Form</h2>
+                    <h2 class="text-center">Admin Login</h2>
                     <div>
-                        <label for="email">Enter your email:</label>
-                        <input type="text" v-model="formData.email" id="email">
+                        <label for="username">Enter your username:</label>
+                        <input type="text" v-model="formData.username" id="username">
                     </div>
                     <div>
                         <label for="password">Enter your password:</label>
                         <input type="password" v-model="formData.password" id="password">
                     </div>
                     <div>
-                        <label>
-                            <input type="radio" v-model="userType" value="customer"> Customer
-                        </label>
-                        <label>
-                            <input type="radio" v-model="userType" value="professional"> Professional
-                        </label>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary" @click="loginUser">Submit</button>
+                        <button class="btn btn-primary" @click="loginAdmin">Submit</button>
                     </div>
                 </div>
             </div>
@@ -33,18 +25,15 @@ export default {
     data: function (){
         return {
             formData:{
-                email: "",
+                username: "",
                 password: ""
             },
-            userType: "customer",
             message:""
         }
     },
     methods: {
-        loginUser: function (){
-            const loginUrl = this.userType === "customer" ? "/api/c_login" : "/api/p_login";
-            
-            fetch(loginUrl, {
+        loginAdmin: function (){
+            fetch("/api/admin", {
                 method: "POST",
                 headers: {
                     "Content-Type":"application/json"
@@ -55,11 +44,9 @@ export default {
             .then(data => {
                 if (Object.keys(data).includes("access_token")){
                     localStorage.setItem("access_token", data.access_token)
-                    localStorage.setItem("id", data.id)
-                    localStorage.setItem("full_name", data.full_name)
-                    
-                    const redirectPath = this.userType === "customer" ? "/dashboard" : "/proff_dash";
-                    this.$router.push(redirectPath);
+                    localStorage.setItem("admin_id", data.id)
+                    localStorage.setItem("admin_name", data.full_name)
+                    this.$router.push("/admin");
                 }
                 else{
                     this.message = data.msg

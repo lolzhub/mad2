@@ -35,6 +35,12 @@ export default {
                 <div v-if="userType === 'professional'">
                     <label for="service_name">Service Name:</label>
                     <input type="text" v-model="formData.service_name" id="service_name">
+                    <label for="service_desc">Service Description:</label>
+                    <input type="text" v-model="formData.service_desc" id="service_desc">
+                    
+                    <label for="time_req">Time Required:</label>
+                    <input type="text" v-model="formData.time_req" id="time_req">
+        
                     <label for="experience">Experience (years):</label>
                     <input type="number" v-model="formData.experience" id="experience">
                     <label for="document">Upload Document:</label>
@@ -57,6 +63,8 @@ export default {
                 address: "",
                 pincode: "",
                 service_name: "",
+                service_desc: "",
+                time_req:"",
                 experience: "",
                 document: null
             }

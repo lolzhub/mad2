@@ -42,6 +42,8 @@ class Professional(db.Model):
     password = db.Column(db.String(128), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     service_name = db.Column(db.String(100), nullable=False)
+    service_desc = db.Column(db.String(250), nullable=False)
+    time_req = db.Column(db.String(50), nullable=False)
     cost = db.Column(db.Float, nullable=False)  # Price of the service
     experience = db.Column(db.Integer, nullable=False)  
     document = db.Column(db.String(255), nullable=True)  # URL for the document
@@ -49,11 +51,8 @@ class Professional(db.Model):
     pincode = db.Column(db.String(10), nullable=False)
     rating = db.Column(db.Float, default=0.0, nullable=True)
     is_blocked = db.Column(db.Boolean, default=True, nullable=False)
-    
-
     # Backreference to service requests
     service_requests = db.relationship('ServiceRequest', backref='professional', lazy=True)
-    # services = db.relationship('Service', backref='professional', lazy=True)
 
     def __repr__(self):
         return f"<Professional('{self.id}', '{self.service_name}'>"
@@ -68,8 +67,8 @@ class Service(db.Model):
     description = db.Column(db.Text, nullable=True)  # Description of the service
     rating = db.Column(db.Float, default=0.0, nullable=True)
     cat = db.Column(db.String(50))
-    # professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=True)  # Optional assignment
     
+    professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=True)  # Optional assignment
 
     # Backreference to service requests
     service_requests = db.relationship('ServiceRequest', backref='service', lazy=True)

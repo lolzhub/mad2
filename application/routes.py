@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from flask import Blueprint, request,send_from_directory, jsonify, render_template, redirect, url_for
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
@@ -10,6 +10,8 @@ import json
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+
+
 
 
 api = Blueprint("api", __name__)
@@ -147,12 +149,54 @@ def customer_dashboard(id):
     ), 200
 
 
+@api.route("/cust/b/<int:id>", methods=["PUT"])
+@jwt_required()
+def block_customer(id):
+    customer = Customer.query.get(id)
+
+    if not customer:
+        return jsonify({"msg": "customer not found", "status": "failure"}), 404
+
+    customer.is_blocked = True
+    db.session.commit()
+
+    return (
+        jsonify({"msg": "customer blocked successfully", "status": "success"}),
+        200,
+    )
+
+
+@api.route("/cust/ub/<int:id>", methods=["PUT"])
+@jwt_required()
+def unblock_customer(id):
+    customer = Customer.query.get(id)
+
+    if not customer:
+        return jsonify({"msg": "customer not found", "status": "failure"}), 404
+
+    customer.is_blocked = False
+
+    db.session.commit()
+
+    return (
+        jsonify({"msg": "customer unblocked successfully", "status": "success"}),
+        200,
+    )
+
+
+
+
 UPLOAD_FOLDER = 'uploads'  # Specify the folder where files will be saved
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}  # Allowed file extensions
 
 # Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+
+@api.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory("uploads", filename)
 
 # Function to check file extension
 def allowed_file(filename):
@@ -212,9 +256,11 @@ def add_professional():
         password=hashed_password,  # Save the hashed password
         full_name=data["full_name"],
         service_name=data["service_name"],
+        service_desc=data["service_desc"],
+        time_req=data["time_req"],
         cost=0.0,
         experience=int(data["experience"]),
-        document=data["document"],  # Store the file path or filename
+        document= data['document'],
         address=data["address"],
         pincode=data["pincode"],
         rating=data.get("rating", 0.0),
@@ -261,6 +307,114 @@ def professional_login():
     return jsonify(
         {"msg": "Login successful", "access_token": access_token, "status": "success"}
     ), 200
+
+
+
+@api.route("/proff/<int:id>", methods=["GET"])
+@jwt_required()
+def view_professional(id):
+    # Get the professional by ID
+    professional = Professional.query.get(id)
+
+    if not professional:
+        return jsonify({"msg": "Professional not found", "status": "failure"}), 404
+
+    return (
+        jsonify(
+            {
+                "msg": "Professional retrieved successfully",
+                "status": "success",
+                "professional": {
+                    "id": professional.id,
+                    "email": professional.email,
+                    "full_name": professional.full_name,
+                    "service_name": professional.service_name,
+                    "cost": professional.cost,
+                    "experience": professional.experience,
+                    "document": professional.document,
+                    "address": professional.address,
+                    "pincode": professional.pincode,
+                    "rating": professional.rating,
+                    "is_blocked": professional.is_blocked,
+                },
+            }
+        ),
+        200,
+    )
+
+
+@api.route("/all_proffs", methods=["GET"])
+@jwt_required()
+def view_all_professionals():
+    # Get all professionals from the database
+    professionals = Professional.query.all()
+
+    # Serialize the list of professionals
+    professionals_list = [
+        {
+            "id": professional.id,
+            "email": professional.email,
+            "full_name": professional.full_name,
+            "service_name": professional.service_name,
+            "cost": professional.cost,
+            "experience": professional.experience,
+            "document": professional.document,
+            "address": professional.address,
+            "pincode": professional.pincode,
+            "rating": professional.rating,
+            "is_blocked": professional.is_blocked,
+        }
+        for professional in professionals
+    ]
+
+    return (
+        jsonify(
+            {
+                "msg": "Professionals retrieved successfully",
+                "status": "success",
+                "professionals": professionals_list,
+            }
+        ),
+        200,
+    )
+
+
+
+@api.route("/proff/b/<int:id>", methods=["PUT"])
+@jwt_required()
+def block_professional(id):
+    # Get the professional by ID
+    professional = Professional.query.get(id)
+
+    if not professional:
+        return jsonify({"msg": "Professional not found", "status": "failure"}), 404
+
+    professional.is_blocked = True
+    db.session.commit()
+
+    return (
+        jsonify({"msg": "Professional blocked successfully", "status": "success"}),
+        200,
+    )
+
+
+@api.route("/proff/ub/<int:id>", methods=["PUT"])
+@jwt_required()
+def unblock_professional(id):
+    # Get the professional by ID
+    professional = Professional.query.get(id)
+
+    if not professional:
+        return jsonify({"msg": "Professional not found", "status": "failure"}), 404
+
+    professional.is_blocked = False
+
+    db.session.commit()
+
+    return (
+        jsonify({"msg": "Professional unblocked successfully", "status": "success"}),
+        200,
+    )
 
 ###########################################################
 #                          Services                       #
@@ -348,22 +502,23 @@ def get_all_services():
 @api.route("/all_servs_by_cat/<name>", methods=["GET"])
 @jwt_required()
 def get_all_services_by_cat(name):
-    services = Service.query.filter_by(cat=name).all()
+    proffs = Professional.query.filter_by(service_name=name).all()
 
-    if not services:
+    if not proffs:
         return jsonify({"msg": "No services found", "status": "failure"}), 404
 
     # Convert to list of dictionaries
     service_list = [
         {
-            "id": service.id,
-            "name": service.name,
-            "price": service.price,
-            "time_required": service.time_required,
-            "description": service.description,
-            "rating": service.rating,
+            "name": proff.service_name,
+            "price": proff.cost,
+            "time_required": proff.time_req,
+            "description": proff.service_desc,
+            "rating": proff.rating,
+            "proff": proff.id,
+            "proff_name": proff.full_name,
         }
-        for service in services
+        for proff in proffs
     ]
 
     return (
@@ -420,7 +575,7 @@ def update_service(id):
     service.time_required = data.get("time_required", service.time_required)
     service.description = data.get("description", service.description)
     service.rating = data.get("rating", service.rating)
-    service.cat = data.get("cat", service.cat)
+    # service.cat = data.get("cat", service.cat)
 
     # Commit changes to the database
     db.session.commit()
@@ -489,7 +644,7 @@ def create_service_request():
         customer_id=data["customer_id"],
         professional_id=data.get("professional_id"),
         remarks=data.get("remarks"),
-        location=data.get("location"),
+        location="location",
         preferred_date=preferred_date,
         urgency_level=data.get("urgency_level"),
         cost=data["cost"],
@@ -505,35 +660,33 @@ def create_service_request():
         db.session.rollback()
         return jsonify({"msg": "Error creating service request", "status": "failure", "error": str(e)}), 500
 
-
 # 2. Get Service Requests for Logged-in User (GET)
 @api.route("/all_reqs", methods=["GET"])
 @jwt_required()
 def get_user_service_requests():
     # Get user identity from JWT
     user_identity = get_jwt_identity()
-    # user_identity_dict = eval(user_identity)
-    print("user identity--->",user_identity, type(user_identity))
-    # print(type(user_identity))
-    user_email = user_identity["email"]
-    user_id = user_identity["id"]
-    user_role = user_identity["role"]
+    print("user identity--->", user_identity, type(user_identity))
 
-    if user_role == "customer":
+    user_role = user_identity["role"]
+    user_id = user_identity.get("id")  # Use .get() to avoid KeyError
+
+    # Admin gets all service requests
+    if user_role == "admin":
+        service_requests = ServiceRequest.query.all()
+    elif user_role == "customer":
         service_requests = ServiceRequest.query.filter_by(customer_id=user_id).all()
     elif user_role == "professional":
         service_requests = ServiceRequest.query.filter_by(professional_id=user_id).all()
-    elif user_role=="admin":
-        service_requests = Service.query.all()
     else:
         return jsonify({"msg": "Invalid user role", "status": "error"}), 403
 
     service_requests_list = [
         {
             "id": req.id,
-            "service_id": req.service.name,
+            "service_name": req.service.name,  # Changed to service_name
             "customer_id": req.customer_id,
-            "professional_id": req.professional.full_name,
+            "professional_name": req.professional.full_name,  # Changed key name
             "date_of_request": req.date_of_request,
             "date_of_completion": req.date_of_completion,
             "service_status": req.service_status,
@@ -549,8 +702,11 @@ def get_user_service_requests():
         for req in service_requests
     ]
 
-    return jsonify({"msg": "Service requests retrieved successfully", "status": "success", "service_requests": service_requests_list}), 200
-
+    return jsonify({
+        "msg": "Service requests retrieved successfully",
+        "status": "success",
+        "service_requests": service_requests_list
+    }), 200
 
 # 3. Get Service Request by ID (GET)
 @api.route("/req/<int:id>", methods=["GET"])
